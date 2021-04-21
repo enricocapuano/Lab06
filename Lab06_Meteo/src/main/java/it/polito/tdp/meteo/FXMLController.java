@@ -45,7 +45,12 @@ public class FXMLController {
 
     @FXML
     void doCalcolaUmidita(ActionEvent event) {	
-    	int mese = boxMese.getValue();
+    	txtResult.clear();
+    	Integer mese = boxMese.getValue();
+    	if(boxMese.getValue() == null) {
+    		txtResult.setText("Errore: selezionare un mese!");
+    		return;
+    	}
     	Map<String, Integer> umidita = m.getUmiditaMedia(mese);
     	String s = "";
     	for(String l : umidita.keySet()) {

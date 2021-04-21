@@ -8,9 +8,12 @@ public class Citta {
 	private String nome;
 	private List<Rilevamento> rilevamenti;
 	private int counter = 0;
+	private int somma = 0;
 	
 	
 	
+	
+
 	public Citta(String nome) {
 		this.nome = nome;
 	}
@@ -18,6 +21,14 @@ public class Citta {
 	public Citta(String nome, List<Rilevamento> rilevamenti) {
 		this.nome = nome;
 		this.rilevamenti = rilevamenti;
+	}
+	
+	public int getSomma() {
+		return somma;
+	}
+
+	public void setSomma(int somma) {
+		this.somma += somma;
 	}
 
 	public String getNome() {

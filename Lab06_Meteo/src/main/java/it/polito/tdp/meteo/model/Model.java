@@ -19,15 +19,13 @@ public class Model {
 	
 	
 	MeteoDAO mDao;
-	List<List<Rilevamento>> rilevamenti;
-	List<Citta> sequenza;
-	Map<Citta, List<Rilevamento>> mappa;
-	int cambi = 0;
+	private List<Rilevamento> soluzioneMigliore;
+	private List<Rilevamento> partenza;
+	private int costo = 0;
 	
 
 	public Model() {
 		mDao = new MeteoDAO();
-		mappa = new HashMap<Citta, List<Rilevamento>>();
 	}
 	
 	
@@ -50,40 +48,84 @@ public class Model {
 		}
 		return umidita;
 	}
-	
-	// of course you can change the String output with what you think works best
-	public List<Citta> trovaSequenza(int mese) {
-		sequenza = new LinkedList<Citta>();
-		LinkedList<Citta> parzialeC = new LinkedList<Citta>();
-		Map<List<Citta>, Integer> parziale = new HashMap<List<Citta>, Integer>();
-		cerca(parziale, 0, mese, parzialeC);
-		return sequenza;
-	}
-	
-	private void cerca(Map<List<Citta>, Integer> mappaParziale, int livello, int mese, LinkedList<Citta> cittaParziale) {
+
+
+
+	public List<Rilevamento> trovaSequenza(int mese) {
+		soluzioneMigliore = new ArrayList<Rilevamento>();
+		partenza = mDao.getRilevamentiMese(mese);
+		List<Rilevamento> parziale = new ArrayList<Rilevamento>();
 		
-		if(cittaParziale.size() == NUMERO_GIORNI_TOTALI) {
-			//caso terminale
-			return;
+		cerca(parziale, 0);
+		return soluzioneMigliore;
+	}
+
+
+
+	private void cerca(List<Rilevamento> parziale, int livello) {
+		if(livello == NUMERO_GIORNI_TOTALI) {
+			costo = this.calcolaCosto(parziale);
+			if(costo < calcolaCosto(soluzioneMigliore)) {
+				soluzioneMigliore = new ArrayList<Rilevamento>(parziale);
+			}
 		}
-		else {
-			for(Citta c : mDao.getCitta()) {	
-				if(cittaParziale.size() < 15) {
-					cittaParziale.add(c);
-					cerca(mappaParziale, livello+1, mese, cittaParziale);
-					cittaParziale.remove(c);
-				}	
+			
+		for(Rilevamento r : partenza) {
+			if(sequenzaAmmissibile(r, parziale)) {
+				parziale.add(r);
+				cerca(parziale, livello+1);
+				parziale.remove(r);
 			}
 		}
 	}
 
-	public Map<Citta, List<Rilevamento>> rilevamentiCitta(int mese) {
+
+
+	private boolean sequenzaAmmissibile(Rilevamento r, List<Rilevamento> parziale) {
+		Citta c = cercaCitta(r.getLocalita());
 		
-		for(Citta c : mDao.getCitta()) {
-			mappa.put(c, mDao.getAllRilevamentiLocalitaMese(mese, c.getNome()));
+		if(parziale.size() == 0) {
+			return true;
 		}
-		
-		return mappa;
+		if(c.getCounter() == 6) {
+			return false;
+		}
+		else {
+			if(c.getCounter() < 3 && !r.getLocalita().equals(parziale.get(parziale.size()-1).getLocalita())) {
+				return false;
+			}
+			c.increaseCounter();
+			return true;
+		}
 	}
+	
+	private Citta cercaCitta(String nome) {
+		for(Citta c : mDao.getCitta()) {
+			if(c.getNome().equals(nome)) {
+				return c;
+			}
+		}
+		return null;
+	}
+
+
+
+	private int calcolaCosto(List<Rilevamento> sequenza) {
+		int c = 0;
+		int indice;
+		for(Rilevamento r : sequenza) {
+			indice = 0;
+			if(indice > 0) {
+				if(!r.equals(sequenza.get(indice-1))) {
+					c += 100;
+				}
+			}
+			c += r.getUmidita();
+			indice++;
+		}
+		return c;
+	}
+	
+	
 	
 }
